@@ -11,6 +11,93 @@ package lexer;
 %standalone
 %state COMENTARIO_BLOQUE
 
+%{
+    // Estructura para la tabla de símbolos
+    public static class TablaSimbolos {
+        String nombre;
+        TablaSimbolos sig;
+        
+        public TablaSimbolos(String nombre) {
+            this.nombre = nombre;
+            this.sig = null;
+        }
+    }
+    
+    private TablaSimbolos tsimb = null;
+    private PrintWriter tiraTokens = null;
+    private PrintWriter errores = null;
+    
+    // Métodos para manejar la tabla de símbolos
+    private void insertar(String nombre) {
+        TablaSimbolos nuevo = new TablaSimbolos(nombre);
+        nuevo.sig = tsimb;
+        tsimb = nuevo;
+    }
+    
+    private TablaSimbolos buscar(String nombre) {
+        TablaSimbolos temp = tsimb;
+        while (temp != null) {
+            if (temp.nombre.equals(nombre)) {
+                return temp;
+            }
+            temp = temp.sig;
+        }
+        return null;
+    }
+    
+    private void imprimirTablaSimbolos() {
+        System.out.println("\n=== TABLA DE SÍMBOLOS ===");
+        TablaSimbolos temp = tsimb;
+        int contador = 1;
+        while (temp != null) {
+            System.out.printf("%3d: %s\n", contador++, temp.nombre);
+            temp = temp.sig;
+        }
+        if (contador == 1) {
+            System.out.println("(vacía)");
+        }
+    }
+    
+    private void escribirTiraTokens(String token, String lexema) {
+        if (tiraTokens != null) {
+            tiraTokens.printf("%-10d%-30s%-20s\n", yyline + 1, lexema, token);
+        }
+    }
+    
+    private void escribirError(String descripcion) {
+        if (errores != null) {
+            errores.printf("Línea %-5d: %s\n", yyline + 1, descripcion);
+        }
+    }
+    
+    // Método inicializador para abrir archivos
+    private void inicializarArchivos() throws IOException {
+        tiraTokens = new PrintWriter(new FileWriter("tiraTokens.txt"));
+        errores = new PrintWriter(new FileWriter("errores.txt"));
+        
+        // Encabezados
+        System.out.printf("%-10s%-30s%-20s\n", "No. Línea", "Lexema", "Token");
+        System.out.println("-".repeat(60));
+        
+        tiraTokens.printf("%-10s%-30s%-20s\n", "No. Línea", "Lexema", "Token");
+        tiraTokens.println("-".repeat(60));
+        
+        errores.println("=== ERRORES LÉXICOS ===");
+        errores.println("-".repeat(40));
+    }
+    
+    // Método para cerrar archivos
+    private void cerrarArchivos() {
+        if (tiraTokens != null) {
+            tiraTokens.close();
+        }
+        if (errores != null) {
+            errores.close();
+        }
+    }
+%}
+
+
 /* ------ EXPRESIONES REGULARES ----- */
 letra     =      [a-zA-Z]
 digito    =      [0-9]
@@ -276,3 +363,55 @@ literalcaracter = '([^'\\]|\\.)'
 }
 
 %%
+
+// === MÉTODO PRINCIPAL ===
+public static void main(String[] args) {
+    if (args.length != 1) {
+        System.err.println("Uso: java AnalizadorLexicoJava <archivo.java>");
+        System.err.println("Ejemplo: java AnalizadorLexicoJava MiPrograma.java");
+        System.exit(1);
+    }
+    
+    File archivo = new File(args[0]);
+    if (!archivo.exists()) {
+        System.err.println("Error: El archivo '" + args[0] + "' no existe.");
+        System.exit(1);
+    }
+    
+    if (!archivo.canRead()) {
+        System.err.println("Error: No se puede leer el archivo '" + args[0] + "'.");
+        System.exit(1);
+    }
+    
+    try {
+        System.out.println("=== ANALIZADOR LÉXICO PARA JAVA ===");
+        System.out.println("Archivo de entrada: " + args[0]);
+        System.out.println("-".repeat(60));
+        
+        AnalizadorLexicoJava scanner = new AnalizadorLexicoJava(new FileReader(archivo));
+        scanner.inicializarArchivos();
+        
+        // Ejecutar el análisis léxico
+        while (!scanner.zzAtEOF) {
+            scanner.yylex();
+        }
+        
+        // Imprimir tabla de símbolos
+        scanner.imprimirTablaSimbolos();
+        
+        // Cerrar archivos
+        scanner.cerrarArchivos();
+        
+        System.out.println("\n=== ANÁLISIS COMPLETADO ===");
+        System.out.println("Archivo de tokens generado: tiraTokens.txt");
+        System.out.println("Archivo de errores generado: errores.txt");
+        
+    } catch (FileNotFoundException e) {
+        System.err.println("Error: No se pudo encontrar el archivo: " + e.getMessage());
+    } catch (IOException e) {
+        System.err.println("Error de E/S: " + e.getMessage());
+    } catch (Exception e) {
+        System.err.println("Error inesperado: " + e.getMessage());
+        e.printStackTrace();
+    }
+}
