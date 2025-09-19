@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> Ya implemente la interfaz, pero para **compilar y ejecutar** el proyecto deben usar los siguientes comandos desde la raíz del repositorio:
+> Comandos
 > ```bash
 > java -jar lib/jflex-full-1.9.1.jar src/lexer/Analizador.flex
 > javac -cp "lib/flatlaf-3.5.jar;src" src/lexer/Main.java -d bin  
