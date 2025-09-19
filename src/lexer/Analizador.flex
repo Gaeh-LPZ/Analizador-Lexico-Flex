@@ -120,6 +120,9 @@ COMENTARIO = "//".*
 "]" { escribirTiraTokens("CORCHETE_DER", yytext()); }
 "(" { escribirTiraTokens("PARENTESIS_IZQ", yytext()); }
 ")" { escribirTiraTokens("PARENTESIS_DER", yytext()); }
+"," { escribirTiraTokens("COMA", yytext()); }
+":" { escribirTiraTokens("DOS_PUNTOS", yytext()); }
+"<" { escribirTiraTokens("MENOR_QUE", yytext()); }
 
 // ----- OPERADORES ARITMETICOS -----//
 "+" { escribirTiraTokens("SUMA", yytext()); }
