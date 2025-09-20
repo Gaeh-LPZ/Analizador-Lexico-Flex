@@ -30,7 +30,7 @@ public class ResultadosLexicosFrame extends JFrame {
         tabs.addTab("Tabla de Símbolos", new JScrollPane(tblSimbolos));
 
         // --- Errores ---
-        String[] colErrores = {"#línea", "Descripción del error"};
+        String[] colErrores = {"descripcion de error", "simbolo de error"};
         tblErrores = new JTable(new DefaultTableModel(errores, colErrores));
         tabs.addTab("Errores Léxicos", new JScrollPane(tblErrores));
 

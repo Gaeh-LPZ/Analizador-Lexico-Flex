@@ -1,5 +1,4 @@
 package lexer.gui;
-
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 import javax.imageio.ImageIO;
@@ -11,13 +10,9 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+//import gui.AnalizadorLexicoPanel;
 
-/**
- * CompiladorMain.java (versión con FlatLaf integrado)
- *
- * - Usa FlatLaf para dar un look moderno (claro/oscuro)
- * - Conserva la estructura modular con DataProvider y componentes reutilizables
- */
+
 public class CompiladorMain extends JFrame {
     private DataProvider dataProvider;
     private JTabbedPane tabbedPane;
@@ -91,14 +86,13 @@ public class CompiladorMain extends JFrame {
         closeBtn.setBorder(BorderFactory.createEmptyBorder());
         closeBtn.setFocusable(false);
         closeBtn.setContentAreaFilled(false);
-        closeBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        closeBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); 
 
-        // Efecto hover en la X
         closeBtn.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent e) {
                 closeBtn.setOpaque(true);
-                closeBtn.setBackground(new Color(220, 70, 70)); // rojo suave
+                closeBtn.setBackground(new Color(220, 70, 70)); 
                 closeBtn.setForeground(Color.blue);
             }
 
@@ -130,7 +124,6 @@ public class CompiladorMain extends JFrame {
                     dispose();
                     break;
                 case "analizador_lexico":
-                    // 👉 Aquí abrimos tu panel personalizado
                     openAnalyzerTab("Analizador Léxico", new AnalizadorLexicoPanel());
                     break;
                 default:
@@ -147,7 +140,6 @@ public class CompiladorMain extends JFrame {
 
     public static void main(String[] args) {
         try {
-            // Cambia entre FlatLightLaf (claro) y FlatDarkLaf (oscuro)
             UIManager.setLookAndFeel(new FlatIntelliJLaf());
             UIManager.put("defaultFont", new Font("JetBrains Mono", Font.PLAIN, 13));
         } catch (Exception e) {
@@ -207,40 +199,62 @@ class ReusableMenuBar extends JMenuBar {
 class ImagePanel extends JPanel {
     private BufferedImage image;
 
-    public ImagePanel(String imagePath) {
+    public ImagePanel(String basePath) {
         try {
-            if (imagePath == null) throw new IOException("ruta de imagen nula");
-            image = ImageIO.read(new File(imagePath));
+            File file = findImageFile(basePath);
+            if (file == null) throw new IOException("No se encontró ninguna imagen con ese nombre");
+            image = ImageIO.read(file);
         } catch (IOException e) {
             image = null;
             System.err.println("No se pudo cargar la imagen: " + e.getMessage());
         }
     }
 
+    private File findImageFile(String basePath) {
+        File base = new File(basePath);
+        File dir  = base.getParentFile();
+        if (dir == null) return null;
+
+        final String prefix = base.getName(); 
+        String[] validExts = ImageIO.getReaderFileSuffixes();
+
+        File[] matches = dir.listFiles(f -> {
+            if (!f.isFile()) return false;
+            String name = f.getName().toLowerCase();
+            if (!name.startsWith(prefix.toLowerCase())) return false;
+            for (String ext : validExts) {
+                if (name.endsWith("." + ext.toLowerCase())) return true;
+            }
+            return false;
+        });
+
+        return (matches != null && matches.length > 0) ? matches[0] : null;
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (image != null) {
-            int pw = getWidth();
-            int ph = getHeight();
+            int w = getWidth(), h = getHeight();
             double imgRatio = (double) image.getWidth() / image.getHeight();
-            double panelRatio = (double) pw / ph;
-
+            double panelRatio = (double) w / h;
             int drawW, drawH;
             if (panelRatio > imgRatio) {
-                drawH = ph;
-                drawW = (int) (ph * imgRatio);
+                drawW = w;
+                drawH = (int) (w / imgRatio);
             } else {
-                drawW = pw;
-                drawH = (int) (pw / imgRatio);
+                drawH = h;
+                drawW = (int) (h * imgRatio);
             }
-            int x = (pw - drawW) / 2;
-            int y = (ph - drawH) / 2;
+            int x = (w - drawW) / 2;
+            int y = (h - drawH) / 2;
             g.drawImage(image, x, y, drawW, drawH, this);
         } else {
             g.setColor(Color.GRAY);
             g.setFont(g.getFont().deriveFont(Font.ITALIC, 14f));
-            drawCenteredString(g, "Imagen no disponible. Coloca resources/compilador_banner.png", getWidth(), getHeight());
+            drawCenteredString(g,
+                "Sin imagen: coloca resources/compilador_banner.(png/jpg/…)",
+                getWidth(), getHeight());
         }
     }
 
@@ -251,6 +265,8 @@ class ImagePanel extends JPanel {
         g.drawString(text, x, y);
     }
 }
+
+
 
 class CodeSnippetPanel extends JPanel {
     public CodeSnippetPanel(String code) {
@@ -278,7 +294,7 @@ interface DataProvider {
 class DefaultDataProvider implements DataProvider {
     @Override
     public String getBannerImagePath() {
-        return "resources/compilador_banner.png";
+        return "resources/compilador_banner"; 
     }
 
     @Override

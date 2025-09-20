@@ -15,40 +15,26 @@ import java.io.IOException;
 %eofval}
 
 %{
-    public class Tabla{
-        String nombre;
-        Tabla siguiente;
+    // ======== CAMBIO PRINCIPAL ========
+    // Usamos LinkedHashMap para mantener el orden de inserción
+    private java.util.LinkedHashMap<Integer,String> tablaSimbolos = new java.util.LinkedHashMap<>();
+    private int nextId = 1;
 
-        public Tabla(String nombre){
-            this.nombre = nombre;
-            this.siguiente = null;
-        }
-    }
-
-    // Listas en memoria
-    private Tabla tablaSimbolos = null;
     private List<Object[]> listaTokens = new ArrayList<>();
     private List<Object[]> listaErrores = new ArrayList<>();
 
     private boolean simboloExiste(String simbolo) {
-        Tabla actual = tablaSimbolos;
-        while (actual != null) {
-            if (actual.nombre.equals(simbolo)) return true;
-            actual = actual.siguiente;
-        }
-        return false;
+        return tablaSimbolos.containsValue(simbolo);
     }
 
     private void agregarSimbolo(String simbolo) {
         if (!simboloExiste(simbolo)) {
-            Tabla nuevo = new Tabla(simbolo);
-            nuevo.siguiente = tablaSimbolos;
-            tablaSimbolos = nuevo;
+            tablaSimbolos.put(nextId++, simbolo);
         }
     }
 
     private void escribirTiraTokens(String token, String lexema){
-        listaTokens.add(new Object[]{token, lexema, yyline + 1, yycolumn + 1});
+        listaTokens.add(new Object[]{yyline + 1, lexema, token, yycolumn + 1});
     }
 
     private void escribirSimbolos(String simbolo){
@@ -68,12 +54,11 @@ import java.io.IOException;
         return listaErrores;
     }
 
+    // Devolvemos ID y nombre en el mismo orden de inserción
     public List<Object[]> getSimbolos() {
         List<Object[]> result = new ArrayList<>();
-        Tabla actual = tablaSimbolos;
-        while (actual != null) {
-            result.add(new Object[]{actual.nombre});
-            actual = actual.siguiente;
+        for (java.util.Map.Entry<Integer,String> e : tablaSimbolos.entrySet()) {
+            result.add(new Object[]{e.getKey(), e.getValue()});
         }
         return result;
     }
@@ -81,7 +66,8 @@ import java.io.IOException;
     public void limpiarArchivos() {
         listaTokens.clear();
         listaErrores.clear();
-        tablaSimbolos = null;
+        tablaSimbolos.clear();
+        nextId = 1;
     }
 %}
 
@@ -134,6 +120,9 @@ COMENTARIO = "//".*
 "]" { escribirTiraTokens("CORCHETE_DER", yytext()); }
 "(" { escribirTiraTokens("PARENTESIS_IZQ", yytext()); }
 ")" { escribirTiraTokens("PARENTESIS_DER", yytext()); }
+"," { escribirTiraTokens("COMA", yytext()); }
+":" { escribirTiraTokens("DOS_PUNTOS", yytext()); }
+"<" { escribirTiraTokens("MENOR_QUE", yytext()); }
 
 // ----- OPERADORES ARITMETICOS -----//
 "+" { escribirTiraTokens("SUMA", yytext()); }

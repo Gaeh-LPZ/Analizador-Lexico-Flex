@@ -1,12 +1,13 @@
 package lexer.gui;
 
-import lexer.Analizador; 
-import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.*;
+import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import lexer.Analizador;
 
 public class AnalizadorLexicoPanel extends JPanel {
+
     private JTextField filePathField;
     private JTextArea textArea;
 
@@ -14,7 +15,7 @@ public class AnalizadorLexicoPanel extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Panel superior
+        // --- Panel superior ---
         JPanel topPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
@@ -24,24 +25,23 @@ public class AnalizadorLexicoPanel extends JPanel {
         filePathField = new JTextField();
         filePathField.setEditable(false);
 
-        JButton btnOpen = new JButton("Abrir");
+        JButton btnOpen   = new JButton("Abrir");
         JButton btnAnalyze = new JButton("Analizar");
-        JButton btnClear = new JButton("Limpiar");
+        JButton btnClear  = new JButton("Limpiar");
 
+        // Abrir archivo y mostrar en área de texto
         btnOpen.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
-            FileNameExtensionFilter filter = new FileNameExtensionFilter("Archivos Java o Texto", "java", "txt");
-            chooser.setFileFilter(filter);
+            chooser.setFileFilter(new FileNameExtensionFilter(
+                    "Archivos Java o Texto", "java", "txt"));
 
-            int option = chooser.showOpenDialog(this);
-            if (option == JFileChooser.APPROVE_OPTION) {
+            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 File file = chooser.getSelectedFile();
                 filePathField.setText(file.getAbsolutePath());
                 loadFileContent(file);
             }
         });
 
-        // BOTÓN ANALIZAR – aquí ya usamos tu Analizador real
         btnAnalyze.addActionListener(e -> {
             String codigo = textArea.getText();
             if (codigo == null || codigo.isBlank()) {
@@ -83,37 +83,33 @@ public class AnalizadorLexicoPanel extends JPanel {
                         "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
-
+        // Limpiar
         btnClear.addActionListener(e -> {
             filePathField.setText("");
             textArea.setText("");
         });
 
+        // Layout del topPanel
         gbc.gridx = 0; gbc.gridy = 0;
         topPanel.add(lblSelect, gbc);
-
         gbc.gridx = 1; gbc.weightx = 1.0;
         topPanel.add(filePathField, gbc);
-
         gbc.gridx = 2; gbc.weightx = 0;
         topPanel.add(btnOpen, gbc);
-
         gbc.gridx = 1; gbc.gridy = 1;
-        gbc.gridwidth = 1;
         topPanel.add(btnAnalyze, gbc);
-
         gbc.gridx = 2;
         topPanel.add(btnClear, gbc);
 
         add(topPanel, BorderLayout.NORTH);
 
-        // Área de texto central
         textArea = new JTextArea();
         textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
-        textArea.setEditable(false);
+        textArea.setEditable(true);
         add(new JScrollPane(textArea), BorderLayout.CENTER);
     }
 
+    /** Carga el contenido de un archivo en el JTextArea */
     private void loadFileContent(File file) {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             textArea.setText("");
